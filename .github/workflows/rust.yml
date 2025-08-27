@@ -1,0 +1,57 @@
+name: rust
+
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+
+on:
+  push:
+    tags:
+      - '*'
+  pull_request:
+
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        command:
+          - cargo fmt --all -- --check
+          - cargo check --all-targets
+          - cargo check --target wasm32-unknown-unknown
+          - cargo clippy --all-targets
+          - cargo clippy --target wasm32-unknown-unknown
+    steps:
+      - uses: actions/checkout@v5
+      - uses: wireapp/core-crypto/.github/actions/setup-and-cache-rust@main
+        with:
+          components: rustfmt, clippy
+          target: wasm32-unknown-unknown
+      - run: ${{ matrix.command }}
+
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        command:
+          - cargo nextest run
+          - cargo test --doc
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: wireapp/core-crypto/.github/actions/setup-and-cache-rust@main
+      - uses: taiki-e/install-action@nextest
+      - run: ${{ matrix.command }}
