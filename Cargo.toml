@@ -4,5 +4,12 @@ version = "0.1.0"
 edition = "2024"
 description = "Implements a `StorageBackend` which delegates to OPFS"
 license = "GPL-3.0-only"
+repository = "https://github.com/wireapp/redb-opfs"
 
 [dependencies]
+futures-lite = "2.6"
+# Temporary! Should be just "redb = "3.0"" as soon as https://github.com/cberner/redb/pull/1065 is merged
+redb = { git = "https://github.com/coriolinus/redb", branch = "prgn/feat/wasm32-unknown-unknown-support", version = "3.0" }
+wasm-bindgen-futures = "0.4"
+wasm_sync = "0.1"
+web-fs = "0.2.7"
