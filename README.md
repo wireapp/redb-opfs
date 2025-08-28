@@ -1,6 +1,6 @@
 # `redb-opfs`: Implements a `StorageBackend` which delegates to OPFS
 
-This allows compilation and deployment on `wasm32-unknown-unknown`.
+This allows deployment on `wasm32-unknown-unknown`.
 
 > [!WARNING]
 > The contents of this README are a statement of intent, not an accurate reflection of the current state of the project.
@@ -18,10 +18,10 @@ This allows compilation and deployment on `wasm32-unknown-unknown`.
 - Explicitly choose this backend when initializing your `Database`:
 
   ```rust
-  use redb_opfs::OpfsStorageBackend;
+  use redb_opfs::OpfsBackend;
 
   let database = redb::Builder::new()
-    .create_with_backend(OpfsStorageBackend::new("my-db"))?;
+    .create_with_backend(OpfsBackend::new("my-db"))?;
   ```
 
 - Go nuts!
