@@ -4,5 +4,12 @@ version = "0.1.0"
 edition = "2024"
 description = "Implements a `StorageBackend` which delegates to OPFS"
 license = "GPL-3.0-only"
+repository = "https://github.com/wireapp/redb-opfs"
 
 [dependencies]
+async-lock = "3.4.1"
+futures-lite = "2.6"
+# Temporary! Should be next released version after https://github.com/cberner/redb/pull/1065 is merged
+redb = { git = "https://github.com/coriolinus/redb", branch = "prgn/feat/wasm32-unknown-unknown-support", version = "3.0" }
+# Temporary! Should be next released version after https://github.com/utooland/tokio-fs-ext/pull/3 is merged
+tokio-fs-ext = { git = "https://github.com/coriolinus/tokio-fs-ext.git", branch = "prgn/feat/file-set-len", version = "0.6.1" }
