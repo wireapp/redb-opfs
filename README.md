@@ -9,22 +9,58 @@ This allows deployment on `wasm32-unknown-unknown`.
 
 ## Usage
 
-- Add this dependency to your project:
+It is important to understand that Redb's [`StorageBackend` interface](https://docs.rs/redb/latest/redb/trait.StorageBackend.html) is fundamentally synchronous,
+and OPFS is fundamentally asynchronous.
+There's a simple way to tie these two things together--[`block_on`](https://docs.rs/futures-lite/latest/futures_lite/future/fn.block_on.html)--but that method
+is illegal on the main thread, in order not to block the UI.
 
-  ```sh
-  cargo add redb-opfs
-  ```
+> [!IMPORTANT]
+> The `OpfsBackend` instance **must** run on a web worker.
 
-- Explicitly choose this backend when initializing your `Database`:
+This gives rise to two use cases.
 
-  ```rust
-  use redb_opfs::OpfsBackend;
+### Your Rust code is already running in a web worker
 
-  let database = redb::Builder::new()
-    .create_with_backend(OpfsBackend::new("my-db"))?;
-  ```
+This case is nice and simple; everything stays within Rust. Just explicitly choose this backend when initializing your `Database`:
 
-- Go nuts!
+```rust
+use redb_opfs::OpfsBackend;
+
+let database = redb::Builder::new()
+  .create_with_backend(OpfsBackend::new("my-db")?)?;
+```
+
+### Your Rust code is running in the main thread
+
+> [!NOTE]
+> Running in this configuration introduces unavoidable performance penalties;
+> when possible, you should prefer to run all your Rust code within a web worker to avoid these.
+
+In this case we need to instantiate the `OpfsBackend` on a web worker and then instantiate the handle on the main thread.
+
+You'll want to use the `worker-shim.js` worker file to initialize the worker, and then hand that worker to the `OpfsBackendHandle`
+
+```js
+import { WorkerHandle } from "./redb-opfs";
+
+const redbOpfsWorker = new Worker("worker-shim.js");
+const workerHandle = WorkerHandle(redbOpfsWorker);
+
+// now pass that handle to your rust code, using a mechanism of your choice.
+```
+
+As you're writing your own Rust anyway, you have your own means of getting the handle into your code from there.
+To keep life simple, there exists `impl TryFrom<JsValue> for WorkerHandle`.
+
+Once you have that, usage is fairly simple:
+
+```rust
+use redb_opfs::WorkerHandle;
+
+let worker_handle = WorkerHandle::try_from(my_js_value)?;
+let database = redb::Builder::new()
+  .create_with_backend(worker_hanndle)?;
+```
 
 ## Building
 
