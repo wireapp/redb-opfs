@@ -26,6 +26,15 @@ This allows deployment on `wasm32-unknown-unknown`.
 
 - Go nuts!
 
+## Building
+
+### Prerequisites for WASM
+
+- [`wasm-bindgen` cli](https://github.com/wasm-bindgen/wasm-bindgen?tab=readme-ov-file#install-wasm-bindgen-cli)
+- [wasm-pack](https://github.com/drager/wasm-pack)
+- [GNU Make](https://www.gnu.org/software/make/)
+
+
 ## License
 
 Licensed only under [GPL-3.0](./LICENSE).

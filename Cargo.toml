@@ -6,10 +6,19 @@ description = "Implements a `StorageBackend` which delegates to OPFS"
 license = "GPL-3.0-only"
 repository = "https://github.com/wireapp/redb-opfs"
 
+[lib]
+crate-type = ["lib", "cdylib"]
+
 [dependencies]
 async-lock = "3.4.1"
+derive_more = { version = "2.0.1", features = ["display", "error"] }
 futures-lite = "2.6"
 # Temporary! Should be next released version after https://github.com/cberner/redb/pull/1065 is merged
 redb = { git = "https://github.com/coriolinus/redb", branch = "prgn/feat/wasm32-unknown-unknown-support", version = "3.0" }
 # Temporary! Should be next released version after https://github.com/utooland/tokio-fs-ext/pull/3 is merged
 tokio-fs-ext = { git = "https://github.com/coriolinus/tokio-fs-ext.git", branch = "prgn/feat/file-set-len", version = "0.6.1" }
+wasm-bindgen = "0.2.101"
+wasm-bindgen-futures = "0.4.51"
+
+[profile.release]
+lto = true

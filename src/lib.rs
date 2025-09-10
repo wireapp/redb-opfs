@@ -2,20 +2,34 @@
 //!
 //! [OPFS]: https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system
 
-use std::{io::SeekFrom, path::Path};
+#[cfg(target_family = "wasm")]
+mod error;
+
+use std::io::SeekFrom;
 
 use async_lock::Mutex;
 use futures_lite::{AsyncReadExt as _, AsyncSeekExt as _, AsyncWriteExt as _, future::block_on};
 use redb::StorageBackend;
 use tokio_fs_ext::{File, OpenOptions};
 
-type Result<T> = std::io::Result<T>;
+#[cfg(target_family = "wasm")]
+use wasm_bindgen::prelude::*;
+
+#[cfg(target_family = "wasm")]
+pub use error::Error;
+
+#[cfg(not(target_family = "wasm"))]
+type Error = std::io::Error;
+
+type Result<T, E = Error> = std::result::Result<T, E>;
+type IoResult<T> = std::io::Result<T>;
 
 /// Implementataion of a [`StorageBackend`] which delegates to [OPFS] when built for wasm.
 ///
 /// In native contexts, this targets the local file system.
 ///
 /// [OPFS]: https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system
+#[cfg_attr(target_family = "wasm", wasm_bindgen)]
 #[derive(Debug)]
 pub struct OpfsBackend {
     file: Mutex<File>,
@@ -35,9 +49,11 @@ unsafe impl Send for OpfsBackend {}
 #[cfg(target_family = "wasm")]
 unsafe impl Sync for OpfsBackend {}
 
+#[cfg_attr(target_family = "wasm", wasm_bindgen)]
 impl OpfsBackend {
     /// Open the file at the specified path.
-    pub async fn new(path: impl AsRef<Path>) -> Result<Self> {
+    #[cfg_attr(target_family = "wasm", wasm_bindgen(js_name = open))]
+    pub async fn new(path: &str) -> Result<Self> {
         let file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -50,7 +66,7 @@ impl OpfsBackend {
 }
 
 impl StorageBackend for OpfsBackend {
-    fn len(&self) -> Result<u64> {
+    fn len(&self) -> IoResult<u64> {
         block_on(async {
             self.file
                 .lock()
@@ -61,7 +77,7 @@ impl StorageBackend for OpfsBackend {
         })
     }
 
-    fn read(&self, offset: u64, out: &mut [u8]) -> Result<()> {
+    fn read(&self, offset: u64, out: &mut [u8]) -> IoResult<()> {
         block_on(async {
             let mut guard = self.file.lock().await;
             guard.seek(SeekFrom::Start(offset)).await?;
@@ -70,20 +86,59 @@ impl StorageBackend for OpfsBackend {
         })
     }
 
-    fn set_len(&self, len: u64) -> Result<()> {
+    fn set_len(&self, len: u64) -> IoResult<()> {
         block_on(async { self.file.lock().await.set_len(len).await })
     }
 
-    fn sync_data(&self) -> Result<()> {
+    fn sync_data(&self) -> IoResult<()> {
         block_on(async { self.file.lock().await.sync_data().await })
     }
 
-    fn write(&self, offset: u64, data: &[u8]) -> Result<()> {
+    fn write(&self, offset: u64, data: &[u8]) -> IoResult<()> {
         block_on(async {
             let mut guard = self.file.lock().await;
             guard.seek(SeekFrom::Start(offset)).await?;
             guard.write_all(data).await?;
             Ok(())
         })
+    }
+}
+
+#[cfg(target_family = "wasm")]
+#[wasm_bindgen]
+#[expect(clippy::len_without_is_empty)]
+impl OpfsBackend {
+    /// Returns the size of the file, in bytes
+    //
+    // Files have length but no trivial `is_empty` impl, so we skip that
+    pub fn len(&self) -> Result<u64> {
+        <Self as StorageBackend>::len(self).map_err(Into::into)
+    }
+
+    /// Reads some bytes from the file at the given offset.
+    pub fn read(&self, offset: u64, out: &mut [u8]) -> Result<()> {
+        <Self as StorageBackend>::read(self, offset, out).map_err(Into::into)
+    }
+
+    /// Truncates or extends the underlying file, updating the size of this file to become `size`.
+    ///
+    /// If `size` is less than the current file's size, then the file will be shrunk.
+    /// If it is greater than the current file's size, then the file will be extended to `size`
+    /// and have all intermediate data filled with 0s.
+    ///
+    /// The file's cursor is not changed. In particular, if the cursor was at the end of the file
+    /// and the file is shrunk with this operaiton, the cursor will now be past the end.
+    pub fn set_len(&self, len: u64) -> Result<()> {
+        <Self as StorageBackend>::set_len(self, len).map_err(Into::into)
+    }
+
+    /// Attempts to sync all OS-internal file content to disk. This might not synchronize file metadata.
+    pub fn sync_data(&self) -> Result<()> {
+        <Self as StorageBackend>::sync_data(self).map_err(Into::into)
+    }
+
+    /// Writes some bytes to the file at the given offset.
+    pub fn write(&self, offset: u64, data: &[u8]) -> Result<()> {
+        <Self as StorageBackend>::write(self, offset, data).map_err(Into::into)
     }
 }
