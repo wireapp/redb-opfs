@@ -26,6 +26,10 @@ type IoResult<T> = std::io::Result<T>;
 
 /// Implementataion of a [`StorageBackend`] which delegates to [OPFS] when built for wasm.
 ///
+/// **IMPORTANT**: This can only ever be used within a web worker.
+/// This _may_ instantiate within the main thread, but as it blocks internally,
+/// it will fail at runtime on the main thread if you attempt to actually use it.
+///
 /// In native contexts, this targets the local file system.
 ///
 /// [OPFS]: https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system
