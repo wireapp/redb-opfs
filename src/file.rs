@@ -18,8 +18,11 @@ pub async fn open_writeable(path: impl AsRef<Path>) -> Result<File> {
     File::open(path).await
 }
 
+/// A blocking File abstraction that operates on OPFS via a [`FileSystemSyncAccessHandle`].
+///
+/// Because this is blocking, it can only run in the context of a web worker, i.e. a [`DedicatedWorkerGlobalScope`].
 #[derive(Debug)]
-pub struct File {
+pub(crate) struct File {
     pub(crate) handle: FileSystemSyncAccessHandle,
     pos: u64,
 }

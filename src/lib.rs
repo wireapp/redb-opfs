@@ -9,7 +9,7 @@ mod file {
     pub use std::fs::File;
     use std::fs::OpenOptions;
 
-    pub async fn open_writeable(path: &str) -> std::io::Result<File> {
+    pub(crate) async fn open_writeable(path: &str) -> std::io::Result<File> {
         OpenOptions::new()
             .read(true)
             .write(true)
