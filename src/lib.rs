@@ -24,6 +24,18 @@ type Error = std::io::Error;
 type Result<T, E = Error> = std::result::Result<T, E>;
 type IoResult<T> = std::io::Result<T>;
 
+/// Should always succeed with the number 42
+#[cfg_attr(target_family = "wasm", wasm_bindgen)]
+pub fn should_succeed() -> Result<u32> {
+    Ok(42)
+}
+
+/// Should always fail with the error "nope"
+#[cfg_attr(target_family = "wasm", wasm_bindgen)]
+pub fn should_fail() -> Result<u32> {
+    Err(std::io::Error::other("nope").into())
+}
+
 /// Implementataion of a [`StorageBackend`] which delegates to [OPFS] when built for wasm.
 ///
 /// **IMPORTANT**: This can only ever be used within a web worker.
