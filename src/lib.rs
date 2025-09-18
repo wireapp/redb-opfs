@@ -4,13 +4,30 @@
 
 #[cfg(target_family = "wasm")]
 mod error;
+#[cfg(not(target_family = "wasm"))]
+mod file {
+    pub use std::fs::File;
+    use std::fs::OpenOptions;
 
-use std::io::SeekFrom;
+    pub async fn open_writeable(path: &str) -> std::io::Result<File> {
+        OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(path)
+    }
+}
+#[cfg(target_family = "wasm")]
+mod file;
+mod file_len;
 
-use async_lock::Mutex;
-use futures_lite::{AsyncReadExt as _, AsyncSeekExt as _, AsyncWriteExt as _, future::block_on};
+use std::io::{Read as _, Seek as _, SeekFrom, Write as _};
+
+use file::{File, open_writeable};
+use file_len::FileLen as _;
+use parking_lot::Mutex;
 use redb::StorageBackend;
-use tokio_fs_ext::{File, OpenOptions};
 
 #[cfg(target_family = "wasm")]
 use wasm_bindgen::prelude::*;
@@ -21,7 +38,7 @@ pub use error::Error;
 #[cfg(not(target_family = "wasm"))]
 type Error = std::io::Error;
 
-type Result<T, E = Error> = std::result::Result<T, E>;
+pub(crate) type Result<T, E = Error> = std::result::Result<T, E>;
 type IoResult<T> = std::io::Result<T>;
 
 /// Implementataion of a [`StorageBackend`] which delegates to [OPFS] when built for wasm.
@@ -42,8 +59,8 @@ pub struct OpfsBackend {
 // Safety: when targeting wasm, we're really working in a single-threaded context anyway, so
 // literally everything is trivially `Send`, because there are no other threads to send it to.
 //
-// Note that we only need to manually implement this for wasm; in native contexts, `tokio_fs_ext`
-// is already built to
+// Note that we only need to manually implement this for wasm; in native contexts, `async_fs::File`
+// already implements `Send`.
 #[cfg(target_family = "wasm")]
 unsafe impl Send for OpfsBackend {}
 
@@ -58,12 +75,7 @@ impl OpfsBackend {
     /// Open the file at the specified path.
     #[cfg_attr(target_family = "wasm", wasm_bindgen(js_name = open))]
     pub async fn new(path: &str) -> Result<Self> {
-        let file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(path)
-            .await?;
+        let file = open_writeable(path).await?;
         let file = Mutex::new(file);
         Ok(Self { file })
     }
@@ -71,40 +83,29 @@ impl OpfsBackend {
 
 impl StorageBackend for OpfsBackend {
     fn len(&self) -> IoResult<u64> {
-        block_on(async {
-            self.file
-                .lock()
-                .await
-                .metadata()
-                .await
-                .map(|metadata| metadata.len())
-        })
-    }
-
-    fn read(&self, offset: u64, out: &mut [u8]) -> IoResult<()> {
-        block_on(async {
-            let mut guard = self.file.lock().await;
-            guard.seek(SeekFrom::Start(offset)).await?;
-            guard.read_exact(out).await?;
-            Ok(())
-        })
+        self.file.lock().len()
     }
 
     fn set_len(&self, len: u64) -> IoResult<()> {
-        block_on(async { self.file.lock().await.set_len(len).await })
+        self.file.lock().set_len(len)
     }
 
     fn sync_data(&self) -> IoResult<()> {
-        block_on(async { self.file.lock().await.sync_data().await })
+        self.file.lock().flush()
+    }
+
+    fn read(&self, offset: u64, out: &mut [u8]) -> IoResult<()> {
+        let mut guard = self.file.lock();
+        guard.seek(SeekFrom::Start(offset))?;
+        guard.read_exact(out)?;
+        Ok(())
     }
 
     fn write(&self, offset: u64, data: &[u8]) -> IoResult<()> {
-        block_on(async {
-            let mut guard = self.file.lock().await;
-            guard.seek(SeekFrom::Start(offset)).await?;
-            guard.write_all(data).await?;
-            Ok(())
-        })
+        let mut guard = self.file.lock();
+        guard.seek(SeekFrom::Start(offset))?;
+        guard.write_all(data)?;
+        Ok(())
     }
 }
 

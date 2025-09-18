@@ -10,14 +10,29 @@ repository = "https://github.com/wireapp/redb-opfs"
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
-async-lock = "3.4.1"
-derive_more = { version = "2.0.1", features = ["display", "error"] }
-futures-lite = "2.6"
+derive_more = { version = "2.0.1", features = ["display", "error", "from"] }
+parking_lot = "0.12.4"
 # Temporary! Should be next released version after https://github.com/cberner/redb/pull/1065 is merged
 redb = { git = "https://github.com/coriolinus/redb", branch = "prgn/feat/wasm32-unknown-unknown-support", version = "3.0" }
-tokio-fs-ext = "0.6.3"
 wasm-bindgen = "0.2.101"
 wasm-bindgen-futures = "0.4.51"
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+js-sys = "0.3.80"
+web-sys = { version = "0.3.80", features = [
+  "DedicatedWorkerGlobalScope",
+  "DomException",
+  "FileSystemDirectoryHandle",
+  "FileSystemFileHandle",
+  "FileSystemGetDirectoryOptions",
+  "FileSystemGetFileOptions",
+  "FileSystemReadWriteOptions",
+  "FileSystemSyncAccessHandle",
+  "StorageManager",
+  "WorkerGlobalScope",
+  "WorkerNavigator",
+] }
+
 
 [profile.release]
 lto = true
