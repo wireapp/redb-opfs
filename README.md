@@ -70,6 +70,23 @@ let database = redb::Builder::new()
 - [wasm-pack](https://github.com/drager/wasm-pack)
 - [GNU Make](https://www.gnu.org/software/make/)
 
+## Examples
+
+### Web Worker
+
+This example demonstrates the simplest possible case: `redb-opfs` is compiled to WASM and deployed,
+where it is used only from Typescript code without interacting at all with other Rust code. In this use case, the
+only thing it gives us is a fully-synchronous interface to OPFS.
+
+#### Prerequisites
+
+- [bun](https://bun.com/)
+- [miniserve](https://github.com/svenstaro/miniserve)
+
+#### Usage
+
+- `make web-worker-example`
+- point your browser at any of the listed URLs the server has bound itself to
 
 ## License
 

@@ -8,11 +8,15 @@ JS_OUT := ts/gen/redb-opfs.js
 # Otherwise build in dev mode, which is much faster
 WASM_BUILD_ARGS := $(if $(RELEASE),,--dev)
 
-.PHONY: clean clean-pack clean-wwex
+.PHONY: clean clean-bun clean-pack clean-wwex
 clean:
 	cargo clean
+	$(MAKE) clean-bun
 	$(MAKE) clean-pack
 	$(MAKE) clean-wwex
+
+clean-bun:
+	rm -rf $(WWEX)/node_modules
 
 clean-pack:
 	rm -rf ts/gen
