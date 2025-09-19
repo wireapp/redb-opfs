@@ -7,25 +7,15 @@ mod error;
 #[cfg(not(target_family = "wasm"))]
 mod file {
     pub use std::fs::File;
-    use std::fs::OpenOptions;
-
-    pub(crate) async fn open_writeable(path: &str) -> std::io::Result<File> {
-        OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(false)
-            .open(path)
-    }
 }
 #[cfg(target_family = "wasm")]
 mod file;
-mod file_len;
+mod file_abstraction;
 
 use std::io::{Read as _, Seek as _, SeekFrom, Write as _};
 
-use file::{File, open_writeable};
-use file_len::FileLen as _;
+use file::File;
+use file_abstraction::FileAbstraction;
 use parking_lot::Mutex;
 use redb::StorageBackend;
 
@@ -75,7 +65,7 @@ impl OpfsBackend {
     /// Open the file at the specified path.
     #[cfg_attr(target_family = "wasm", wasm_bindgen(js_name = open))]
     pub async fn new(path: &str) -> Result<Self> {
-        let file = open_writeable(path).await?;
+        let file = <File as FileAbstraction>::open(path).await?;
         let file = Mutex::new(file);
         Ok(Self { file })
     }

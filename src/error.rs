@@ -54,7 +54,11 @@ impl Error {
         io::Error::other(err).into()
     }
 
+    pub(crate) fn into_inner(self) -> io::Error {
+        self.0
+    }
+
     pub(crate) fn to_io(value: JsValue) -> io::Error {
-        Self::from(value).0
+        Self::from(value).into_inner()
     }
 }
