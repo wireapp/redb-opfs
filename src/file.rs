@@ -32,8 +32,15 @@ impl File {
         let path = virtualize_path(path)?;
         let name = path
             .file_name()
-            .ok_or(io::Error::from(ErrorKind::InvalidFilename))?
-            .to_string_lossy();
+            .ok_or(io::Error::new(
+                ErrorKind::InvalidFilename,
+                "no filename detected",
+            ))?
+            .to_str()
+            .ok_or(io::Error::new(
+                ErrorKind::InvalidFilename,
+                "non utf-8 chars in filename",
+            ))?;
 
         // in a perfect world, it would be
         //   let parent_handle = path.parent().map(open_dir).unwrap_or_else(root).await?;
@@ -44,7 +51,7 @@ impl File {
             None => root().await?,
         };
 
-        let file_handle = get_file_handle(&name, &parent_handle).await?;
+        let file_handle = get_file_handle(name, &parent_handle).await?;
 
         Ok(File {
             handle: file_handle,
@@ -203,8 +210,11 @@ async fn open_dir(path: impl AsRef<Path>) -> Result<FileSystemDirectoryHandle> {
                 "non-normal component in path: {component:?}"
             )));
         };
-        let component = component.to_string_lossy();
-        handle = get_dir_handle(&handle, &component).await?;
+        let component = component.to_str().ok_or(io::Error::new(
+            ErrorKind::InvalidFilename,
+            "non utf-8 chars in dir name",
+        ))?;
+        handle = get_dir_handle(&handle, component).await?;
     }
 
     Ok(handle)
