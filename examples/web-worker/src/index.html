@@ -15,6 +15,21 @@
             padding: 1rem;
             border-radius: 4px;
         }
+
+        fieldset {
+            margin-top: 1.5rem;
+            padding: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-top: 0.5rem;
+        }
+
+        input,
+        button {
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 
@@ -22,8 +37,34 @@
     <h1>Web Worker / <code>OpfsUser</code> Demo</h1>
     <div id="output"></div>
 
+    <fieldset>
+        <legend>Store Data</legend>
+        <label>
+            Offset:
+            <input type="number" id="storeOffset" value="0" />
+        </label>
+        <label>
+            Data hexadecimal:
+            <input type="text" id="storeData" placeholder="10 00 de ad be ef" />
+        </label>
+        <button id="storeBtn">Store</button>
+    </fieldset>
+
+    <fieldset>
+        <legend>Load Data</legend>
+        <label>
+            Offset:
+            <input type="number" id="loadOffset" value="0" />
+        </label>
+        <label>
+            Size (number of bytes):
+            <input type="number" id="loadSize" value="4" />
+        </label>
+        <button id="loadBtn">Load</button>
+    </fieldset>
+
     <script type="module">
-        import { OpfsUser } from './index.js'; // your bundled JS
+        import { OpfsUser } from './index.js';
 
         const outputDiv = document.getElementById('output');
         const log = (msg) => {
@@ -32,9 +73,9 @@
             outputDiv.appendChild(p);
         };
 
-        async function runDemo() {
-            const opfsUser = new OpfsUser();
+        const opfsUser = new OpfsUser();
 
+        async function runDemo() {
             // Prepare data
             const squares = new Uint8Array(16);
             for (let i = 0; i < 16; i++) {
@@ -57,6 +98,52 @@
             log("Error: " + err.message);
             console.error(err);
         });
+
+        document.getElementById('storeBtn').addEventListener('click', async () => {
+            try {
+                const offset = BigInt(document.getElementById('storeOffset').value);
+                let hexStr = document.getElementById('storeData').value.trim();
+
+                if (!hexStr) {
+                    log("No hex data entered.");
+                    return;
+                }
+
+                // Remove spaces and normalize
+                hexStr = hexStr.replace(/[^0-9a-fA-F]/g, '');
+                if (hexStr.length % 2 !== 0) {
+                    log("Invalid hex string length.");
+                    return;
+                }
+
+                const bytes = new Uint8Array(hexStr.length / 2);
+                for (let i = 0; i < hexStr.length; i += 2) {
+                    bytes[i / 2] = parseInt(hexStr.substr(i, 2), 16);
+                }
+
+                await opfsUser.store(offset, bytes);
+                log(`Stored HEX [${Array.from(bytes).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')}] at offset ${offset}`);
+            } catch (err) {
+                log("Error storing data: " + err.message);
+            }
+        });
+
+        document.getElementById('loadBtn').addEventListener('click', async () => {
+            try {
+                const offset = BigInt(document.getElementById('loadOffset').value);
+                const size = parseInt(document.getElementById('loadSize').value, 10);
+                const data = await opfsUser.load(offset, size);
+
+                const hexOutput = Array.from(data)
+                    .map(b => b.toString(16).padStart(2, '0').toUpperCase())
+                    .join(' ');
+
+                log(`Loaded from offset ${offset}, size ${size}: ${hexOutput}`);
+            } catch (err) {
+                log("Error loading data: " + err.message);
+            }
+        });
+
     </script>
 </body>
 
