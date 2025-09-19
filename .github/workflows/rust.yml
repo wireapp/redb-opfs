@@ -45,7 +45,7 @@ jobs:
       fail-fast: false
       matrix:
         command:
-          - cargo nextest run
+          - cargo nextest run --no-tests warn
           - cargo test --doc
 
     steps:
