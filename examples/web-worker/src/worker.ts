@@ -12,6 +12,7 @@ const backend = await OpfsBackend.open("my-db");
 
 dlog("worker: registering message handler");
 self.addEventListener("message",
+    // note this is _not_ async! The magic here is using OPFS synchronously.
     (event) => {
         dlog("worker: processing message");
 
@@ -22,7 +23,7 @@ self.addEventListener("message",
                 return;
             }
 
-            dlog(`worker: processing ${event.data.op}`);
+            dlog(`worker: processing ${event.data.op} (${event.data.id})`);
 
             switch (event.data.op) {
                 case "store":
@@ -36,10 +37,12 @@ self.addEventListener("message",
                     backend.read(event.data.offset, ret);
                     break;
             }
-        } finally {
-            // always return something
-            dlog(`worker: posting response (${ret.length} bytes)`)
-            self.postMessage(ret)
+
+            dlog(`worker: posting response to ${event.data.id} (${ret.length} bytes)`)
+            self.postMessage({ id: event.data.id, data: ret });
+        } catch (e) {
+            dlog(`worker: responding with error to ${event.data.id} (${e})`)
+            self.postMessage({ id: event.data.id, error: String(e) })
         }
     });
 

@@ -33,7 +33,7 @@
         };
 
         async function runDemo() {
-            const opfsUser = new OpfsUser("opfs");
+            const opfsUser = new OpfsUser();
 
             // Prepare data
             const squares = new Uint8Array(16);
@@ -47,7 +47,8 @@
             log("Squares array stored: " + squares.join(", "));
 
             log("Retrieving square of 4...");
-            const foursquared = (await opfsUser.load(BigInt(4), 1))[0];
+            const foursquared = await opfsUser.load(BigInt(4), 1);
+            console.log("foursquared", foursquared);
 
             log("Square of 4 is: " + foursquared);
         }
