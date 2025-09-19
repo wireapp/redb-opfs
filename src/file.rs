@@ -1,3 +1,18 @@
+//! Implementation of a simple blocking File abstraction backed by OPFS.
+//!
+//! Because it is based on OPFS, this will only work in a web worker.
+//!
+//! This implementation makes several assumptions and simplifications:
+//!
+//! - no handle caching is performed
+//! - the "current directory" is always the root and cannot be changed
+//! - fs prefixes (`c:\`, `//share`, etc) are unsupported in paths
+//! - parent directory annotations (`..`) are unsupported in paths
+//! - files are always opened with (effectively) read+write+create mode
+//! - files are never automatically truncated on creation
+//! - cursor position is always initialized at 0
+//! - necessary parent directories are always silently implicitly created
+
 use std::{
     io::{self, ErrorKind, Read, Seek, Write},
     path::{Component, Path, PathBuf},
