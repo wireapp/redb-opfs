@@ -62,7 +62,6 @@ $(BUNDLE_INDEX) $(BUNDLE_WORKER) $(BUNDLE_WASM) &: $(WWEX_HTML) $(WASM_OUT) $(JS
 web-worker-example: $(BUNDLE_INDEX) $(BUNDLE_WORKER) $(BUNDLE_WASM)
 #	cargo install --locked miniserve
 	miniserve \
-		--verbose \
 		--index index.html \
 		--port 8000 \
 	$(WWTARGET)

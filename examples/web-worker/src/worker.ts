@@ -42,3 +42,6 @@ self.addEventListener("message",
             self.postMessage(ret)
         }
     });
+
+// send the handshake ready message so the `OpfsUser` knows we can now receive messages
+self.postMessage({ type: "ready" });

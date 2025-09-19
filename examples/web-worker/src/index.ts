@@ -8,6 +8,7 @@ export class OpfsUser {
     private responseLock: Lock | null;
     private response: Response | null;
     private worker: Worker;
+    private ready: Promise<void>;
 
     constructor(label?: string, workerPath: string = "./worker.js") {
         this.dispatchSemaphore = new Semaphore(`${label ?? workerPath} dispatch`, 1);
@@ -16,8 +17,21 @@ export class OpfsUser {
         this.responseLock = null;
 
         this.worker = new Worker(workerPath, { type: "module" });
-        this.worker.addEventListener("error", this._onError);
-        this.worker.addEventListener("message", this._onMessage);
+        this.worker.addEventListener("error", (e) => this._onError(e));
+
+
+        // this promise will resolve exactly once when the worker sends the ready message,
+        // then remain resolved forever, minimizing latency
+        this.ready = new Promise(resolve => {
+            const onReady = (event: MessageEvent) => {
+                if (event.data?.type === "ready") {
+                    this.worker.removeEventListener("message", onReady);
+                    this.worker.addEventListener("message", (e) => this._onMessage(e));
+                    resolve();
+                }
+            }
+            this.worker.addEventListener("message", onReady);
+        });
     }
 
     _onError(event: ErrorEvent) {
@@ -28,6 +42,7 @@ export class OpfsUser {
     _onMessage(event: MessageEvent) {
         dlog("opfsu: received message from worker");
         this.response = event.data;
+        console.log("  ", this.response);
         this.releaseResponseLock();
     }
 
@@ -44,6 +59,10 @@ export class OpfsUser {
     }
 
     private async dispatch(message: Message): Promise<Response> {
+        // wait for worker to report that it is ready
+        await this.ready;
+
+        // get the dispatch lock--this ensures that there is only one message in flight at a time
         const dispatchLock = await this.dispatchSemaphore.acquire();
 
         try {
@@ -57,9 +76,10 @@ export class OpfsUser {
             dlog(`opfsu: waiting for response from worker`);
             (await this.responseSemaphore.acquire()).release();
             // now we have a response we can return
-            const response = this.response ?? new Uint8Array();
+            const response = this.response;
             this.response = null;
-            return response;
+            dlog(`opfsu: received response from worker:`, response);
+            return response ?? new Uint8Array();
         } finally {
             dispatchLock.release()
             this.releaseResponseLock()
