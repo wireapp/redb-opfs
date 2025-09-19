@@ -4,18 +4,8 @@ import init, { OpfsBackend } from "../../../ts/gen/redb-opfs"
 import { dlog } from "./dlog";
 import { isMessage, type Response } from "./types";
 
-// manually load the module.
-// this may not be strictly necessary; we get the same error
-// if we just omit all parameters to `init`
-const WASM_PATH = "../../../ts/gen/redb-opfs_bg.wasm";
-const wasm_url = new URL(WASM_PATH, import.meta.url)
-const wasm_file = Bun.file(wasm_url);
-const wasm_buffer = await wasm_file.arrayBuffer();
-
-const module = new WebAssembly.Module(wasm_buffer);
-
 dlog("worker: initializing wasm");
-await init({ module_or_path: module });
+await init();
 dlog("worker: initializing OpfsBackend")
 const backend = await OpfsBackend.open("my-db");
 

@@ -58,8 +58,9 @@ impl File {
         // but we can't do that as each `impl Future` is a different type, even if the
         // outputs resolve to the same type.
         let parent_handle = match path.parent() {
-            Some(parent) => open_dir(parent).await?,
-            None => root().await?,
+            Some(parent) if parent != Path::new("") => open_dir(parent).await?,
+            // Some case below must be empty
+            Some(_) | None => root().await?,
         };
 
         let file_handle = get_file_handle(name, &parent_handle).await?;

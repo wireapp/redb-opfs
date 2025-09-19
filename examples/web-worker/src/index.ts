@@ -2,31 +2,39 @@ import { Semaphore, type Lock } from "./semaphore";
 import type { Message, Response } from "./types";
 import { dlog } from "./dlog";
 
-class OpfsUser {
+export class OpfsUser {
     private dispatchSemaphore: Semaphore;
     private responseSemaphore: Semaphore;
     private responseLock: Lock | null;
     private response: Response | null;
     private worker: Worker;
 
-    constructor(label?: string, workerPath: string = "./src/worker.ts") {
+    constructor(label?: string, workerPath: string = "./worker.js") {
         this.dispatchSemaphore = new Semaphore(`${label ?? workerPath} dispatch`, 1);
         this.responseSemaphore = new Semaphore(`${label ?? workerPath} response`, 1);
         this.response = null;
         this.responseLock = null;
 
-        this.worker = new Worker(workerPath, {
-            preload: "../../ts/gen/redb-opfs"
-        });
-        this.worker.addEventListener("error", (event) => {
-            throw new Error(event.message);
-        });
-        this.worker.addEventListener("message",
-            (event) => {
-                dlog("opfsu: received message from worker");
-                this.response = event.data;
-                this.releaseResponseLock();
-            });
+        this.worker = new Worker(workerPath, { type: "module" });
+        this.worker.addEventListener("error", this._onError);
+        this.worker.addEventListener("message", this._onMessage);
+    }
+
+    _onError(event: ErrorEvent) {
+        console.error("worker error event:", event);
+        throw new Error(event.message);
+    }
+
+    _onMessage(event: MessageEvent) {
+        dlog("opfsu: received message from worker");
+        this.response = event.data;
+        this.releaseResponseLock();
+    }
+
+    destroy() {
+        this.worker.removeEventListener('error', this._onError);
+        this.worker.removeEventListener('message', this._onMessage);
+        this.worker.terminate()
     }
 
     private releaseResponseLock() {
@@ -70,20 +78,3 @@ class OpfsUser {
         return await this.dispatch({ op: "load", offset, size })
     }
 }
-
-// lets cache some squares in opfs so we never have to recompute them
-const opfsUser = new OpfsUser("opfs");
-
-const squares = new Uint8Array(16);
-for (var i = 0; i < 16; i++) {
-    squares[i] = i * i;
-}
-
-// store the squares
-console.log("main: storing data")
-await opfsUser.store(BigInt(0), squares);
-
-// what's the square of 4?
-console.log("main: retrieving data")
-const foursquared = (await opfsUser.load(BigInt(4), 1))[0];
-console.log("main: square of 4 is: ", foursquared);

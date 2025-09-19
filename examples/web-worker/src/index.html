@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Web Worker / OpfsUser Demo</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2rem;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 1rem;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Web Worker / <code>OpfsUser</code> Demo</h1>
+    <div id="output"></div>
+
+    <script type="module">
+        import { OpfsUser } from './index.js'; // your bundled JS
+
+        const outputDiv = document.getElementById('output');
+        const log = (msg) => {
+            const p = document.createElement('p');
+            p.textContent = msg;
+            outputDiv.appendChild(p);
+        };
+
+        async function runDemo() {
+            const opfsUser = new OpfsUser("opfs");
+
+            // Prepare data
+            const squares = new Uint8Array(16);
+            for (let i = 0; i < 16; i++) {
+                squares[i] = i * i;
+            }
+
+            log("Storing squares array in OPFS...");
+            await opfsUser.store(BigInt(0), squares);
+
+            log("Squares array stored: " + squares.join(", "));
+
+            log("Retrieving square of 4...");
+            const foursquared = (await opfsUser.load(BigInt(4), 1))[0];
+
+            log("Square of 4 is: " + foursquared);
+        }
+
+        runDemo().catch(err => {
+            log("Error: " + err.message);
+            console.error(err);
+        });
+    </script>
+</body>
+
+</html>
