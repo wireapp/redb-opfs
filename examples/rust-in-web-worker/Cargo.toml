@@ -1,0 +1,12 @@
+[package]
+name = "riww"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+js-sys = "0.3.80"
+redb = { git = "https://github.com/cberner/redb", branch = "master", version = "3.0.2" }
+redb-opfs = { version = "0.1.0", path = "../.." }
+thiserror = "2.0.16"
+wasm-bindgen = "0.2.103"
+wasm-bindgen-futures = "0.4.53"

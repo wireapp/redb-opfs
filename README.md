@@ -90,6 +90,24 @@ is a fully-synchronous interface to OPFS.
 - `make web-worker-example`
 - point your browser at any of the listed URLs the server has bound itself to
 
+### Rust in Web Worker
+
+This example demonstrates the first "real" use case: a Rust library uses redb internally.
+The rust code is all exclusively contained within the web worker.
+
+The application is a toy click tracker: records the timestamp of each click of a button.
+Reports the total number of clicks, and several aggregated quantities.
+
+#### Prerequisites
+
+- [bun](https://bun.com/)
+- [miniserve](https://github.com/svenstaro/miniserve)
+
+#### Usage
+
+- `make rust-in-web-worker-example`
+- point your browser at any of the listed URLs the server has bound itself to
+
 ## License
 
 Licensed only under [GPL-3.0](./LICENSE).
