@@ -123,11 +123,13 @@ impl OpfsBackend {
     ///
     /// The file's cursor is not changed. In particular, if the cursor was at the end of the file
     /// and the file is shrunk with this operaiton, the cursor will now be past the end.
+    #[wasm_bindgen(js_name = "setLen")]
     pub fn set_len(&self, len: u64) -> Result<()> {
         <Self as StorageBackend>::set_len(self, len).map_err(Into::into)
     }
 
     /// Attempts to sync all OS-internal file content to disk. This might not synchronize file metadata.
+    #[wasm_bindgen(js_name = "syncData")]
     pub fn sync_data(&self) -> Result<()> {
         <Self as StorageBackend>::sync_data(self).map_err(Into::into)
     }
