@@ -12,8 +12,8 @@ crate-type = ["lib", "cdylib"]
 [dependencies]
 derive_more = { version = "2.0.1", features = ["display", "error", "from"] }
 parking_lot = "0.12.4"
-# Temporary! Should be next released version after https://github.com/cberner/redb/pull/1065 is merged
-redb = { git = "https://github.com/coriolinus/redb", branch = "prgn/feat/wasm32-unknown-unknown-support", version = "3.0" }
+# Temporary! Should be next released version containing https://github.com/cberner/redb/pull/1084
+redb = { git = "https://github.com/cberner/redb", branch = "master", version = "3.0" }
 wasm-bindgen = "0.2.101"
 wasm-bindgen-futures = "0.4.51"
 
