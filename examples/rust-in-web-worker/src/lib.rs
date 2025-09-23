@@ -22,7 +22,7 @@ pub type Timestamp = u128;
 const CLICK_TABLE: TableDefinition<Timestamp, ()> = TableDefinition::new("clicks");
 
 /// Initialize the database
-#[cfg_attr(target_family = "wasm", wasm_bindgen)]
+#[cfg_attr(target_family = "wasm", wasm_bindgen(js_name = initDb))]
 pub async fn init_db(db_name: &str) -> Result<()> {
     let backend = OpfsBackend::new(db_name).await?;
     let database = Database::builder().create_with_backend(backend)?;
@@ -74,7 +74,7 @@ pub fn click() -> Result<()> {
 /// Clicks in last N seconds
 ///
 /// If `n_seconds` is `None`, returns the total number of clicks.
-#[cfg_attr(target_family = "wasm", wasm_bindgen)]
+#[cfg_attr(target_family = "wasm", wasm_bindgen(js_name = clicksInLastSeconds))]
 pub fn clicks_in_last_seconds(n_seconds: Option<u32>) -> Result<u32> {
     let tx = read_tx()?;
     let table = tx.open_table(CLICK_TABLE)?;
