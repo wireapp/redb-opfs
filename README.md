@@ -2,7 +2,8 @@
 
 This allows deployment on `wasm32-unknown-unknown`.
 
-> [!WARNING] The contents of this README are a statement of intent, not an accurate reflection of the current state of
+> [!WARNING]
+> The contents of this README are a statement of intent, not an accurate reflection of the current state of
 > the project.
 >
 > Carefully inspect the code and/or generated documentation before relying on this library.
@@ -15,7 +16,8 @@ fundamentally asynchronous. There's a simple way to tie these two things
 together--[`block_on`](https://docs.rs/futures-lite/latest/futures_lite/future/fn.block_on.html)--but that method is
 illegal on the main thread, in order not to block the UI.
 
-> [!IMPORTANT] The `OpfsBackend` instance **must** run on a web worker.
+> [!IMPORTANT]
+> The `OpfsBackend` instance **must** run on a web worker.
 
 This gives rise to two use cases.
 
@@ -33,7 +35,8 @@ let database = redb::Builder::new()
 
 ### Your Rust code is running in the main thread
 
-> [!NOTE] Running in this configuration introduces unavoidable performance penalties; when possible, you should prefer
+> [!NOTE]
+> Running in this configuration introduces unavoidable performance penalties; when possible, you should prefer
 > to run all your Rust code within a web worker to avoid these.
 
 In this case we need to instantiate the `OpfsBackend` on a web worker and then instantiate the handle on the main
