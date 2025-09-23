@@ -3,6 +3,9 @@ name = "riww"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+crate-type = ["lib", "cdylib"]
+
 [dependencies]
 js-sys = "0.3.80"
 redb = { git = "https://github.com/cberner/redb", branch = "master", version = "3.0.2" }

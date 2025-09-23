@@ -23,7 +23,7 @@ const CLICK_TABLE: TableDefinition<Timestamp, ()> = TableDefinition::new("clicks
 
 /// Initialize the database
 #[cfg_attr(target_family = "wasm", wasm_bindgen)]
-pub async fn init(db_name: &str) -> Result<()> {
+pub async fn init_db(db_name: &str) -> Result<()> {
     let backend = OpfsBackend::new(db_name).await?;
     let database = Database::builder().create_with_backend(backend)?;
 
@@ -95,7 +95,7 @@ pub fn clicks_in_last_seconds(n_seconds: Option<u32>) -> Result<u32> {
 pub enum Error {
     #[error("database already initialized; do not re-init")]
     AlreadyInitialized,
-    #[error("database not yet initialized; call `init`")]
+    #[error("database not yet initialized; call `init_db`")]
     NotInitialized,
     #[error(transparent)]
     Io(#[from] std::io::Error),

@@ -14,6 +14,7 @@ clean:
 	$(MAKE) clean-bun
 	$(MAKE) clean-pack
 	$(MAKE) clean-wwex
+	$(MAKE) clean-riww
 
 clean-bun:
 	rm -rf $(WWEX)/node_modules
@@ -23,6 +24,9 @@ clean-pack:
 
 clean-wwex:
 	rm -rf $(WWTARGET)
+
+clean-riww:
+	cd examples/rust-in-web-worker && cargo clean
 
 Cargo.lock: Cargo.toml
 	cargo check
@@ -69,3 +73,20 @@ web-worker-example: $(BUNDLE_INDEX) $(BUNDLE_WORKER) $(BUNDLE_WASM)
 		--index index.html \
 		--port 8000 \
 	$(WWTARGET)
+
+RIWW_RS_FILES := $(shell find examples/rust-in-web-worker -type f -name '*.rs' 2>/dev/null | LC_ALL=C sort)
+RIWW_SOURCES := examples/rust-in-web-worker/Cargo.toml examples/rust-in-web-worker/Cargo.lock $(RIWW_RS_FILES)
+RIWW_WASM_OUT := ts/gen/riww_bg.wasm
+RIWW_DTS_OUT := ts/gen/riww.d.ts
+RIWW_JS_OUT := ts/gen/riww.js
+
+$(RIWW_JS_OUT) $(RIWW_DTS_OUT) $(RIWW_WASM_OUT) &: $(RIWW_SOURCES)
+	cd examples/rust-in-web-worker && \
+	wasm-pack build \
+		--locked \
+		--no-pack \
+		--out-dir ../../ts/gen \
+		--out-name riww \
+		--mode normal \
+		--target web \
+		$(WASM_BUILD_ARGS)
