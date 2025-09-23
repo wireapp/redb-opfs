@@ -96,7 +96,7 @@ This example demonstrates the first "real" use case: a Rust library uses redb in
 The rust code is all exclusively contained within the web worker.
 
 The application is a toy click tracker: records the timestamp of each click of a button.
-Reports the total number of clicks, and several aggregated quantities.
+Reports the total number of clicks, and n clicks over some aggregated time periods.
 
 #### Prerequisites
 

@@ -54,7 +54,7 @@ impl Error {
         io::Error::other(err).into()
     }
 
-    pub(crate) fn into_inner(self) -> io::Error {
+    pub fn into_inner(self) -> io::Error {
         self.0
     }
 
