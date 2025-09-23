@@ -10,5 +10,6 @@ updates:
     schedule:
       interval: "weekly"
   - package-ecosystem: "rust-toolchain"
+    directory: "/"
     schedule:
       interval: "daily"
