@@ -29,11 +29,11 @@ self.addEventListener("message",
                 case "store":
                     const writeData = event.data.data ?? new Uint8Array();
                     backend.write(event.data.offset, writeData);
-                    backend.sync_data()
+                    backend.syncData()
                     break;
                 case "load":
                     ret = new Uint8Array(event.data.size ?? 0);
-                    backend.sync_data()
+                    backend.syncData()
                     backend.read(event.data.offset, ret);
                     break;
             }
